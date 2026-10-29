@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bit – a simple chatbot</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F9FAFB; --ink:#16181D; --muted:#6B7280; --line:#E5E7EB; --shell:#FFFFFF;
+  --screen:#16181D; --eye:#A9C1FF; --accent:#2F5BFF; --on-accent:#FFFFFF;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1115; --ink:#ECEEF2; --muted:#9AA1AD; --line:#262A33; --shell:#1A1D24;
+    --screen:#07080B; --eye:#B8CBFF; --accent:#6C8CFF; --on-accent:#0F1115; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1115; --ink:#ECEEF2; --muted:#9AA1AD; --line:#262A33; --shell:#1A1D24;
+  --screen:#07080B; --eye:#B8CBFF; --accent:#6C8CFF; --on-accent:#0F1115; color-scheme:dark;
+}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+*,*::before,*::after{box-sizing:border-box}
+.app{height:100%;max-width:560px;margin:0 auto;padding:12px 20px 20px;display:flex;flex-direction:column}
+
+.stage{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 0 12px}
+.robot{width:clamp(96px,22vh,168px);height:auto;overflow:visible;display:block}
+.name{font-size:16px;font-weight:600;margin-top:4px}
+.status{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);min-height:18px}
+.status::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent)}
+
+/* robot parts */
+.shell{fill:var(--shell);stroke:var(--line);stroke-width:2}
+.screen{fill:var(--screen)}
+.stem{stroke:var(--line);stroke-width:3;stroke-linecap:round}
+.tip,.core{fill:var(--accent)}
+.eye{fill:var(--eye);transform-box:fill-box;transform-origin:center;transition:transform .08s}
+.blink .eye{transform:scaleY(.1)}
+#eyes,#head{transition:transform .14s ease-out}
+.smile{fill:none;stroke:var(--eye);stroke-width:3.5;stroke-linecap:round}
+.talk{fill:var(--eye);opacity:0;transform-box:fill-box;transform-origin:center}
+.talking .smile{opacity:0}
+.talking .talk{opacity:1;animation:talk .26s ease-in-out infinite alternate}
+.arm-r{transform-box:fill-box;transform-origin:50% 12%}
+.waving .arm-r{animation:wave .4s ease-in-out infinite alternate}
+.float{animation:float 4.5s ease-in-out infinite}
+.tip{animation:pulse 2.4s ease-in-out infinite}
+.core{animation:pulse 3s ease-in-out infinite}
+.thinking .tip{animation-duration:.6s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
+@keyframes talk{from{transform:scaleY(.25)}to{transform:scaleY(1)}}
+@keyframes wave{from{transform:rotate(-125deg)}to{transform:rotate(-165deg)}}
+
+/* chat */
+.log{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:8px 2px}
+.msg{max-width:80%;padding:10px 14px;border-radius:18px;font-size:15px;line-height:1.45;overflow-wrap:anywhere}
+.msg.bot{align-self:flex-start;border:1px solid var(--line);border-bottom-left-radius:6px}
+.msg.user{align-self:flex-end;background:var(--ink);color:var(--bg);border-bottom-right-radius:6px}
+.dots{display:flex;gap:4px;padding:14px}
+.dots span{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:blip 1s ease-in-out infinite}
+.dots span:nth-child(2){animation-delay:.15s}
+.dots span:nth-child(3){animation-delay:.3s}
+@keyframes blip{0%,100%{opacity:.3}50%{opacity:1}}
+
+.chips{flex:none;display:flex;flex-wrap:wrap;gap:8px;padding:10px 0}
+.chip{font:inherit;font-size:14px;color:var(--ink);background:transparent;border:1px solid var(--line);
+  border-radius:999px;padding:6px 14px;cursor:pointer}
+.chip:hover{background:var(--line)}
+form{flex:none;display:flex;gap:8px}
+input{flex:1;min-width:0;font:inherit;font-size:16px;color:var(--ink);background:var(--shell);
+  border:1px solid var(--line);border-radius:999px;padding:12px 18px}
+input::placeholder{color:var(--muted)}
+.send{flex:none;width:46px;height:46px;border:0;border-radius:50%;background:var(--accent);color:var(--on-accent);
+  display:grid;place-items:center;cursor:pointer}
+:is(input,.send,.chip):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){
+  .float,.tip,.core{animation:none}
+  .dots span{animation:none;opacity:.6}
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <section class="stage">
+    <svg id="robot" class="robot" viewBox="0 0 200 224" role="img" aria-label="Bit, the chatbot robot">
+      <ellipse cx="100" cy="216" rx="46" ry="5" fill="var(--line)"/>
+      <g class="float">
+        <rect class="shell arm-l" x="40" y="156" width="14" height="42" rx="7"/>
+        <rect class="shell arm-r" x="146" y="156" width="14" height="42" rx="7"/>
+        <rect class="shell" x="90" y="134" width="20" height="14" rx="4"/>
+        <rect class="shell" x="58" y="144" width="84" height="62" rx="26"/>
+        <circle class="core" cx="100" cy="175" r="5"/>
+        <g id="head">
+          <line class="stem" x1="100" y1="40" x2="100" y2="24"/>
+          <circle class="tip" cx="100" cy="18" r="6"/>
+          <rect class="shell" x="28" y="74" width="14" height="30" rx="7"/>
+          <rect class="shell" x="158" y="74" width="14" height="30" rx="7"/>
+          <rect class="shell" x="40" y="40" width="120" height="98" rx="36"/>
+          <rect class="screen" x="54" y="56" width="92" height="66" rx="26"/>
+          <g id="eyes">
+            <ellipse class="eye" cx="80" cy="84" rx="9" ry="11"/>
+            <ellipse class="eye" cx="120" cy="84" rx="9" ry="11"/>
+          </g>
+          <path class="smile" d="M88 106 Q100 115 112 106"/>
+          <ellipse class="talk" cx="100" cy="108" rx="8" ry="6"/>
+        </g>
+      </g>
+    </svg>
+    <div class="name">Bit</div>
+    <div class="status" id="status" aria-live="polite">Online</div>
+  </section>
+
+  <section class="log" id="log" aria-live="polite" aria-label="Conversation"></section>
+
+  <div class="chips" aria-label="Quick messages">
+    <button class="chip" type="button" data-say="hello">hello</button>
+    <button class="chip" type="button" data-say="how are you">how are you</button>
+    <button class="chip" type="button" data-say="bye">bye</button>
+  </div>
+
+  <form id="form" autocomplete="off">
+    <input id="input" type="text" placeholder="Type a message" aria-label="Message" maxlength="200">
+    <button class="send" type="submit" aria-label="Send message">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    </button>
+  </form>
+</main>
+
+<script>
+/* ---------- Chatbot logic (rules: if / else if, functions, loops) ---------- */
+function normalize(text) {
+  return text.toLowerCase()
+    .replace(/’/g, "'")
+    .replace(/[^a-z\s']/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// loop through the words and look for a match
+function hasWord(words, list) {
+  for (const word of words) {
+    if (list.includes(word)) return true;
+  }
+  return false;
+}
+
+// loop through phrases and look for a match
+function hasPhrase(text, list) {
+  const padded = " " + text + " ";
+  for (const phrase of list) {
+    if (padded.includes(" " + phrase + " ")) return true;
+  }
+  return false;
+}
+
+function getReply(raw) {
+  const text = normalize(raw);
+  const words = text.split(" ");
+
+  if (hasWord(words, ["bye", "goodbye", "cya"]) || hasPhrase(text, ["see you", "good night"])) {
+    return { text: "Goodbye!", bye: true };
+  } else if (hasPhrase(text, ["how are you", "how are you doing", "how are u", "how r u", "how is it going", "how's it going", "hows it going", "what's up", "whats up"])) {
+    return { text: "I’m fine, thanks!", bye: false };
+  } else if (hasWord(words, ["hello", "hi", "hey", "hola", "howdy"]) || hasPhrase(text, ["good morning", "good afternoon", "good evening"])) {
+    return { text: "Hi!", bye: false };
+  } else if (hasWord(words, ["thanks", "thank", "thx"])) {
+    return { text: "You’re welcome!", bye: false };
+  } else if (hasPhrase(text, ["your name", "who are you"])) {
+    return { text: "I’m Bit, a tiny rule-based bot.", bye: false };
+  } else if (hasWord(words, ["help"]) || hasPhrase(text, ["what can you do"])) {
+    return { text: "Try saying hello, how are you, or bye.", bye: false };
+  } else {
+    return { text: "Sorry, I don’t understand that yet. Try hello, how are you, or bye.", bye: false };
+  }
+}
+
+/* ---------- Page + robot behaviour ---------- */
+const $ = id => document.getElementById(id);
+const robot = $("robot"), head = $("head"), eyes = $("eyes"), log = $("log");
+const form = $("form"), input = $("input"), statusEl = $("status");
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let pointer = null, mode = "idle", talkTimer = null, waveTimer = null;
+
+function setStatus(text) { statusEl.textContent = text; }
+
+function setMode(next) {
+  mode = next;
+  robot.classList.toggle("thinking", next === "thinking");
+  robot.classList.toggle("talking", next === "talking");
+  look();
+}
+
+function look() {
+  let x = 0, y = 0;
+  if (mode === "thinking") {
+    x = -4; y = -5;
+  } else if (document.activeElement === input && input.value.length > 0) {
+    y = 5;
+  } else if (pointer) {
+    const r = robot.getBoundingClientRect();
+    const dx = pointer.x - (r.left + r.width / 2);
+    const dy = pointer.y - (r.top + r.height * 0.4);
+    const d = Math.hypot(dx, dy) || 1;
+    const m = Math.min(d / 220, 1);
+    x = dx / d * m * 6;
+    y = dy / d * m * 4.5;
+  }
+  eyes.style.transform = "translate(" + x + "px," + y + "px)";
+  head.style.transform = "translate(" + (x * 0.35) + "px," + (y * 0.35) + "px)";
+}
+
+function addMessage(text, who) {
+  const el = document.createElement("div");
+  el.className = "msg " + who;
+  el.textContent = text;
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+  return el;
+}
+
+function addDots() {
+  const el = document.createElement("div");
+  el.className = "msg bot dots";
+  el.setAttribute("aria-label", "Bit is typing");
+  el.innerHTML = "<span></span><span></span><span></span>";
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+  return el;
+}
+
+function speak(reply) {
+  clearTimeout(talkTimer);
+  setMode("talking");
+  setStatus("Replying…");
+  if (reply.bye) {
+    robot.classList.add("waving");
+    clearTimeout(waveTimer);
+    waveTimer = setTimeout(() => robot.classList.remove("waving"), 2200);
+  }
+  talkTimer = setTimeout(() => { setMode("idle"); setStatus("Online"); }, 500 + reply.text.length * 40);
+}
+
+function send(raw) {
+  const text = raw.trim();
+  if (!text) return;
+  addMessage(text, "user");
+  input.value = "";
+  clearTimeout(talkTimer);
+  setMode("thinking");
+  setStatus("Thinking…");
+  const dots = addDots();
+  setTimeout(() => {
+    const reply = getReply(text);
+    dots.remove();
+    addMessage(reply.text, "bot");
+    speak(reply);
+  }, 650);
+}
+
+function blinkLoop() {
+  if (!reduceMotion) {
+    robot.classList.add("blink");
+    setTimeout(() => robot.classList.remove("blink"), 140);
+  }
+  setTimeout(blinkLoop, 2200 + Math.random() * 3200);
+}
+
+form.addEventListener("submit", e => { e.preventDefault(); send(input.value); input.focus(); });
+document.querySelectorAll(".chip").forEach(chip => chip.addEventListener("click", () => send(chip.dataset.say)));
+input.addEventListener("input", () => {
+  if (mode === "idle") setStatus(input.value ? "Listening…" : "Online");
+  look();
+});
+input.addEventListener("blur", () => { if (mode === "idle") setStatus("Online"); look(); });
+window.addEventListener("pointermove", e => { pointer = { x: e.clientX, y: e.clientY }; look(); });
+document.documentElement.addEventListener("pointerleave", () => { pointer = null; look(); });
+
+addMessage("Say hello to start.", "bot");
+setTimeout(blinkLoop, 1500);
+</script>
+</body>
+</html>
