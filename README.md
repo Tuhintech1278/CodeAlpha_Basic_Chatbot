@@ -20,9 +20,9 @@
 ## Preview
 
 <p align="center">
-  <img src="assets/chat.png" alt="Light mode chat screen showing hello, how are you and bye with Bit's replies" width="48%">
+  <img src="Basic Chatbot/chat.png" alt="Light mode chat screen showing hello, how are you and bye with Bit's replies" width="48%">
   &nbsp;
-  <img src="assets/chat-dark.png" alt="Dark mode chat screen with Bit thinking" width="48%">
+  <img src="Basic Chatbot/chat-dark.png" alt="Dark mode chat screen with Bit thinking" width="48%">
 </p>
 
 The page follows your system setting, so it switches between light and dark mode automatically.
@@ -32,7 +32,7 @@ The page follows your system setting, so it switches between light and dark mode
 Bit is drawn in SVG and reacts to what you do.
 
 <p align="center">
-  <img src="assets/states.png" alt="Bit in four states: idle, listening, thinking and waving" width="70%">
+  <img src="Basic Chatbot/states.png" alt="Bit in four states: idle, listening, thinking and waving" width="70%">
 </p>
 
 | State | What happens |
@@ -58,7 +58,7 @@ Bit also understands `thanks`, `your name`, and `help`. Anything else gets a pol
 ## How It Works
 
 <p align="center">
-  <img src="assets/code.png" alt="The getReply function using if and else if rules" width="60%">
+  <img src="Basic Chatbot/code.png" alt="The getReply function using if and else if rules" width="60%">
 </p>
 
 1. `normalize()` cleans the message: lowercase, punctuation removed, extra spaces trimmed.
