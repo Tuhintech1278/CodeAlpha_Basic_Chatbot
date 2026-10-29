@@ -32,7 +32,7 @@ The page follows your system setting, so it switches between light and dark mode
 Bit is drawn in SVG and reacts to what you do.
 
 <p align="center">
-  <img src="Basic Chatbot/states.png" alt="Bit in four states: idle, listening, thinking and waving" width="70%">
+  <img src="Basic Chatbot/states.png" alt="Bit in four states: idle, listening, thinking and waving" width="50%">
 </p>
 
 | State | What happens |
@@ -58,7 +58,7 @@ Bit also understands `thanks`, `your name`, and `help`. Anything else gets a pol
 ## How It Works
 
 <p align="center">
-  <img src="Basic Chatbot/code.png" alt="The getReply function using if and else if rules" width="60%">
+  <img src="Basic Chatbot/code.png" alt="The getReply function using if and else if rules" width="50%">
 </p>
 
 1. `normalize()` cleans the message: lowercase, punctuation removed, extra spaces trimmed.
@@ -141,4 +141,4 @@ No installation is needed.
 
 ## License
 
-This project is open source and available under the [MIT License](LICENSE).
+This project is open source and free to use for learning purposes.
