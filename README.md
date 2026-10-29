@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Basic Chatbot/banner.png" alt="Bit, a simple rule-based chatbot" width="100%">
+  <img src="Basic Chatbot/banner.png" alt="Bit, a simple rule-based chatbot" width="50%">
 </p>
 
 <p align="center">
